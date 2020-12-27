@@ -11,7 +11,7 @@ public class GroundScript : MonoBehaviour
         // Set the position to the origin
         transform.position = Vector3.zero;
         // Set scale
-        transform.localScale = new Vector3(2, 2, 2);
+        transform.localScale = new Vector3(10, 10, 10);
     }
 
     // Update is called once per frame
