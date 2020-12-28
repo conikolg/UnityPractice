@@ -19,6 +19,9 @@ public class PlayerScript : MonoBehaviour
     // How far can the player move in any direction using the arrow keys
     private const float OmnidirectionalSpeed = 8f;
 
+    // How quickly the player model can turn
+    private const float RotationSpeed = 2000f;
+
     // Where the player is trying to go
     private Vector3 targetDestination;
 
@@ -51,25 +54,31 @@ public class PlayerScript : MonoBehaviour
                 {
                     // Compute new target destination of player
                     targetDestination = new Vector3(hit.point.x, transform.position.y, hit.point.z);
-                    // Make the player look in the intended direction of movement
-                    transform.LookAt(targetDestination, Vector3.up);
                 }
             }
 
-            /* Move the player as needed regardless */
             // Compute how the player would move to get there in one step
             Vector3 movement = targetDestination - transform.position;
             // If destination is farther than the player can move since the last frame...
             if (movement.magnitude > OmnidirectionalSpeed * Time.deltaTime)
             {
-                // ... then move the maximum possible direction
+                // Turn towards the intended destination
+                Quaternion intendedLookDir = Quaternion.LookRotation(targetDestination - transform.position);
+                transform.rotation = Quaternion.RotateTowards(
+                    transform.rotation,
+                    intendedLookDir,
+                    RotationSpeed * Time.deltaTime);
+                // Move the maximum possible distance in the needed direction
                 transform.Translate(OmnidirectionalSpeed * Time.deltaTime * movement.normalized, Space.World);
             }
             else
             {
-                // ... otherwise, arrive at the destination.
+                // Will arrive at destination, so instant turn towards destination
+                transform.LookAt(targetDestination, Vector3.up);
+                // Arrive at the destination.
                 transform.position = targetDestination;
             }
+            
         }
 
         // Process movement based on keyboard input
