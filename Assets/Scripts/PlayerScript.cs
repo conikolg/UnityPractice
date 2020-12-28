@@ -35,7 +35,6 @@ public class PlayerScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
         // Process movement based on mouse input
         if (moveWithMouseClick)
         {
@@ -44,26 +43,35 @@ public class PlayerScript : MonoBehaviour
             {
                 // Raycast to the onscreen location -> get global coordinates of that click on the ground
                 RaycastHit hit;
-                if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, movementLayerMask))
+                if (Physics.Raycast(
+                    mainCamera.ScreenPointToRay(Input.mousePosition),
+                    out hit,
+                    Mathf.Infinity,
+                    movementLayerMask))
                 {
                     // Compute new target destination of player
-                    targetDestination = new Vector3(hit.point.x, hit.point.y + 1, hit.point.z);
+                    targetDestination = new Vector3(hit.point.x, transform.position.y, hit.point.z);
+                    // Make the player look in the intended direction of movement
+                    transform.LookAt(targetDestination, Vector3.up);
                 }
             }
 
             /* Move the player as needed regardless */
             // Compute how the player would move to get there in one step
             Vector3 movement = targetDestination - transform.position;
-            // Cap movement in this frame to the maximum possible distance moved this frame
+            // If destination is farther than the player can move since the last frame...
             if (movement.magnitude > OmnidirectionalSpeed * Time.deltaTime)
             {
-                movement = movement.normalized * OmnidirectionalSpeed;
+                // ... then move the maximum possible direction
+                transform.Translate(OmnidirectionalSpeed * Time.deltaTime * movement.normalized, Space.World);
             }
-
-            // Move the player
-            transform.Translate(movement * Time.deltaTime);
+            else
+            {
+                // ... otherwise, arrive at the destination.
+                transform.position = targetDestination;
+            }
         }
-        
+
         // Process movement based on keyboard input
         else
         {
