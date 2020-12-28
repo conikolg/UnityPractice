@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 6416809336854724685}
   - component: {fileID: 2879239316629127991}
   - component: {fileID: 1307517829148864142}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -113,6 +113,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 0}
   moveWithMouseClick: 1
+  movementLayerMask:
+    serializedVersion: 2
+    m_Bits: 64
 --- !u!54 &2879239316629127991
 Rigidbody:
   m_ObjectHideFlags: 0

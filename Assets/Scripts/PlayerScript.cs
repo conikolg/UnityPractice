@@ -11,6 +11,7 @@ public class PlayerScript : MonoBehaviour
 
     // Which movement type to use
     public bool moveWithMouseClick = true;
+    public LayerMask movementLayerMask;
 
     // How fast the player can move in cardinal directions using arrow keys
     private const float CardinalSpeed = 6f;
@@ -41,12 +42,11 @@ public class PlayerScript : MonoBehaviour
             // Check if the player is holding left-click down this frame
             if (Input.GetMouseButtonDown(0))
             {
-                // Raycast to the onscreen location -> get global coordinates of that click
+                // Raycast to the onscreen location -> get global coordinates of that click on the ground
                 RaycastHit hit;
-                if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition), out hit))
+                if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, movementLayerMask))
                 {
                     // Compute new target destination of player
-                    // TODO: Don't assume the ground is being clicked on OR guarantee that the ground is clicked on
                     targetDestination = new Vector3(hit.point.x, hit.point.y + 1, hit.point.z);
                 }
             }
