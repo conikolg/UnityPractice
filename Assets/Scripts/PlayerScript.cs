@@ -76,6 +76,7 @@ public class PlayerScript : MonoBehaviour
         {
             // Compute how the player would move to get there in one step
             Vector3 movement = _targetDestination - _rigidbody.position;
+            movement = new Vector3(movement.x, 0, movement.z);
 
             // Only bother if actually moving somewhere
             if (movement != Vector3.zero)
