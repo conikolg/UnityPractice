@@ -15,7 +15,7 @@ public class ProjectFog : MonoBehaviour
 
     private float blendAmount;
 
-    private void Awake ()
+    private void Awake()
     {
         projector = GetComponent<Projector>();
         projector.enabled = true;
@@ -33,19 +33,19 @@ public class ProjectFog : MonoBehaviour
         StartNewBlend();
     }
 
-    RenderTexture GenerateTexture()
+    private RenderTexture GenerateTexture()
     {
         RenderTexture rt = new RenderTexture(
             fogTexture.width * textureScale,
             fogTexture.height * textureScale,
             0,
-            fogTexture.format) { filterMode = FilterMode.Bilinear };
+            fogTexture.format) {filterMode = FilterMode.Bilinear};
         rt.antiAliasing = fogTexture.antiAliasing;
 
         return rt;
     }
 
-    public void StartNewBlend()
+    private void StartNewBlend()
     {
         StopCoroutine(BlendFog());
         blendAmount = 0;
@@ -56,7 +56,7 @@ public class ProjectFog : MonoBehaviour
         StartCoroutine(BlendFog());
     }
 
-    IEnumerator BlendFog()
+    private IEnumerator BlendFog()
     {
         while (blendAmount < 1)
         {
@@ -67,6 +67,7 @@ public class ProjectFog : MonoBehaviour
             projector.material.SetFloat("_Blend", blendAmount);
             yield return null;
         }
+
         // once finished blending, swap the textures and start a new blend
         StartNewBlend();
     }
