@@ -408,9 +408,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 8513061846515110008}
-  distance: 7
-  height: 15
-  heightDamping: 5
+  hypotenuse: 17
+  angleOfDepression: 65
+  inDegrees: 1
+  yDamping: 50
+  zDamping: 50
+  xDamping: 50
+  rotationDamping: 0
 --- !u!1 &1051389892
 GameObject:
   m_ObjectHideFlags: 0
