@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -12,22 +9,20 @@ public class PlayerScript : MonoBehaviour
     // Layers to consider when calculating world position from mouse position for movement commands
     public LayerMask movementLayerMask;
 
-    // How far can the player move in any direction using the arrow keys
-    private const float OmnidirectionalSpeed = 8f;
-
-    // How quickly the player model can turn
-    private const float RotationSpeed = 1000f;
-
     // Reference to the RigidBody for this player
     private Rigidbody _rigidbody;
 
-    // Where the player is trying to walk/move to
-    private bool _isWalking;
-    private Vector3 _targetDestination;
+    /* Normal walking movement parameters */
+    private bool _isWalking; // If the player is walking 
+    private Vector3 _targetDestination; // Where the player is trying to walk/move to
+    private const float MovementSpeed = 8f; // How quickly player can move in units/second
+    private const float RotationSpeed = 1080f; // How quickly player can turn in degrees/second
 
-    // Where the player is dashing to
+    /* Dash movement parameters */
     private bool _isDashing;
     private Vector3 _dashDestination;
+    private const float MaxDashDistance = 20f;
+    private const bool MustDashMaxDistance = true;
 
     // Start is called before the first frame update
     void Start()
@@ -40,7 +35,7 @@ public class PlayerScript : MonoBehaviour
 
         // Set target destination to player's own position initially
         _isWalking = false;
-        _targetDestination = transform.position;
+        _targetDestination = Vector3.zero;
 
         // Set dash status to not dashing
         _isDashing = false;
@@ -55,19 +50,35 @@ public class PlayerScript : MonoBehaviour
         {
             OnMouse1Click();
         }
+
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            OnSpaceBarPressed();
+        }
     }
 
     // FixedUpdate is called by the Physics System
     private void FixedUpdate()
     {
-        if (_isWalking)
+        // Dash priority higher than normal walking priority
+        if (_isDashing)
+        {
+            // Implement basic blink first...
+            // Instantly turn to that direction
+            _rigidbody.rotation = Quaternion.LookRotation(_dashDestination - _rigidbody.position);
+            // Teleport to that location
+            _rigidbody.MovePosition(_dashDestination);
+            // Player is no longer dashing
+            _isDashing = false;
+        }
+        else if (_isWalking)
         {
             // Compute how the player would move to get there in one step
             Vector3 movement = _targetDestination - _rigidbody.position;
             movement = new Vector3(movement.x, 0, movement.z);
 
             // If destination is farther than the player can move since the last frame...
-            if (movement.magnitude > OmnidirectionalSpeed * Time.deltaTime)
+            if (movement.magnitude > MovementSpeed * Time.deltaTime)
             {
                 // Turn towards the intended destination
                 Quaternion intendedLookDir = Quaternion.LookRotation(movement);
@@ -77,7 +88,7 @@ public class PlayerScript : MonoBehaviour
                     RotationSpeed * Time.deltaTime);
                 // Move the maximum possible distance in the needed direction
                 _rigidbody.MovePosition(_rigidbody.position +
-                                        OmnidirectionalSpeed * Time.deltaTime * movement.normalized);
+                                        MovementSpeed * Time.deltaTime * movement.normalized);
             }
             else
             {
@@ -104,6 +115,38 @@ public class PlayerScript : MonoBehaviour
             // Compute new target destination of player
             _targetDestination = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
             _isWalking = true;
+        }
+    }
+
+    // Handle what happens when the space bar is pressed
+    private void OnSpaceBarPressed()
+    {
+        // Raycast to the onscreen location of mouse -> get global coordinates of that on the ground
+        RaycastHit hit;
+        if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
+            out hit, Mathf.Infinity, movementLayerMask))
+        {
+            // Compute new mouse location on the ground
+            Vector3 location = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
+            // Correct dash location based on dash distance and "dash-through" vs "dash-to" status
+            Vector3 dashMovement = location - _rigidbody.position;
+            if (MustDashMaxDistance)
+            {
+                dashMovement = dashMovement.normalized * MaxDashDistance;
+            }
+            else
+            {
+                // Simply cap the distance
+                if (dashMovement.sqrMagnitude > MaxDashDistance * MaxDashDistance)
+                {
+                    dashMovement = dashMovement.normalized * MaxDashDistance;
+                }
+            }
+
+            // Set the computed dash destination
+            _dashDestination = _rigidbody.position + dashMovement;
+            // Set dashing status
+            _isDashing = true;
         }
     }
 }
