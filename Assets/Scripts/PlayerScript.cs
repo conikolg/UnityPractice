@@ -14,15 +14,16 @@ public class PlayerScript : MonoBehaviour
 
     /* Normal walking movement parameters */
     private bool _isWalking; // If the player is walking 
-    private Vector3 _targetDestination; // Where the player is trying to walk/move to
-    private const float MovementSpeed = 8f; // How quickly player can move in units/second
+    private Vector3 _walkDestination; // Where the player is trying to walk/move to
+    private const float WalkingMovementSpeed = 8f; // How quickly player can walk in units/second
     private const float RotationSpeed = 1080f; // How quickly player can turn in degrees/second
 
     /* Dash movement parameters */
     private bool _isDashing;
+    private const float DashingMovementSpeed = 50f; // How quickly player can walk in units/second
+    private const float MaxDashDistance = 8f; // How far, at most, can the dash can carry the player
+    private const float MinDashDistance = 4f; // How far, at least, can the dash can carry the player
     private Vector3 _dashDestination;
-    private const float MaxDashDistance = 20f;
-    private const bool MustDashMaxDistance = true;
 
     // Start is called before the first frame update
     void Start()
@@ -35,7 +36,7 @@ public class PlayerScript : MonoBehaviour
 
         // Set target destination to player's own position initially
         _isWalking = false;
-        _targetDestination = Vector3.zero;
+        _walkDestination = Vector3.zero;
 
         // Set dash status to not dashing
         _isDashing = false;
@@ -63,41 +64,12 @@ public class PlayerScript : MonoBehaviour
         // Dash priority higher than normal walking priority
         if (_isDashing)
         {
-            // Implement basic blink first...
-            // Instantly turn to that direction
-            _rigidbody.rotation = Quaternion.LookRotation(_dashDestination - _rigidbody.position);
-            // Teleport to that location
-            _rigidbody.MovePosition(_dashDestination);
-            // Player is no longer dashing
-            _isDashing = false;
+            // BlinkDash();
+            NormalDash();
         }
         else if (_isWalking)
         {
-            // Compute how the player would move to get there in one step
-            Vector3 movement = _targetDestination - _rigidbody.position;
-            movement = new Vector3(movement.x, 0, movement.z);
-
-            // If destination is farther than the player can move since the last frame...
-            if (movement.magnitude > MovementSpeed * Time.deltaTime)
-            {
-                // Turn towards the intended destination
-                Quaternion intendedLookDir = Quaternion.LookRotation(movement);
-                _rigidbody.rotation = Quaternion.RotateTowards(
-                    _rigidbody.rotation,
-                    intendedLookDir,
-                    RotationSpeed * Time.deltaTime);
-                // Move the maximum possible distance in the needed direction
-                _rigidbody.MovePosition(_rigidbody.position +
-                                        MovementSpeed * Time.deltaTime * movement.normalized);
-            }
-            else
-            {
-                // Will arrive at destination, so instant turn towards destination
-                _rigidbody.rotation = Quaternion.LookRotation(movement);
-                // Arrive at the destination.
-                _rigidbody.position = _targetDestination;
-                _isWalking = false;
-            }
+            Walk();
         }
     }
 
@@ -113,7 +85,7 @@ public class PlayerScript : MonoBehaviour
             movementLayerMask))
         {
             // Compute new target destination of player
-            _targetDestination = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
+            _walkDestination = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
             _isWalking = true;
         }
     }
@@ -121,32 +93,91 @@ public class PlayerScript : MonoBehaviour
     // Handle what happens when the space bar is pressed
     private void OnSpaceBarPressed()
     {
+        // Caches the rigidbody position
+        Vector3 currentPosition = _rigidbody.position;
+
         // Raycast to the onscreen location of mouse -> get global coordinates of that on the ground
         RaycastHit hit;
         if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
             out hit, Mathf.Infinity, movementLayerMask))
         {
             // Compute new mouse location on the ground
-            Vector3 location = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
-            // Correct dash location based on dash distance and "dash-through" vs "dash-to" status
-            Vector3 dashMovement = location - _rigidbody.position;
-            if (MustDashMaxDistance)
-            {
+            Vector3 location = new Vector3(hit.point.x, currentPosition.y, hit.point.z);
+            // Compute movement vector based on input location
+            Vector3 dashMovement = location - currentPosition;
+
+            /* Correct dash movement for dash range boundaries */
+            // Cap dash movement if trying to go too far
+            if (dashMovement.sqrMagnitude > MaxDashDistance * MaxDashDistance)
                 dashMovement = dashMovement.normalized * MaxDashDistance;
-            }
-            else
-            {
-                // Simply cap the distance
-                if (dashMovement.sqrMagnitude > MaxDashDistance * MaxDashDistance)
-                {
-                    dashMovement = dashMovement.normalized * MaxDashDistance;
-                }
-            }
+            // Check against the dash distance floor as well
+            else if (dashMovement.sqrMagnitude < MinDashDistance * MinDashDistance)
+                dashMovement = dashMovement.normalized * MinDashDistance;
 
             // Set the computed dash destination
-            _dashDestination = _rigidbody.position + dashMovement;
+            _dashDestination = currentPosition + dashMovement;
+            // Instantly turn to that direction
+            _rigidbody.rotation = Quaternion.LookRotation(_dashDestination - _rigidbody.position);
             // Set dashing status
             _isDashing = true;
+        }
+    }
+
+    private void Walk()
+    {
+        // Compute how the player would move to get there in one step
+        Vector3 movement = _walkDestination - _rigidbody.position;
+        movement = new Vector3(movement.x, 0, movement.z);
+
+        // If destination is farther than the player can move since the last frame...
+        if (movement.magnitude > WalkingMovementSpeed * Time.deltaTime)
+        {
+            // Turn towards the intended destination
+            Quaternion intendedLookDir = Quaternion.LookRotation(movement);
+            _rigidbody.rotation = Quaternion.RotateTowards(
+                _rigidbody.rotation,
+                intendedLookDir,
+                RotationSpeed * Time.deltaTime);
+            // Move the maximum possible distance in the needed direction
+            _rigidbody.MovePosition(_rigidbody.position + WalkingMovementSpeed * Time.deltaTime * movement.normalized);
+        }
+        else
+        {
+            // Will arrive at destination, so instant turn towards destination
+            _rigidbody.rotation = Quaternion.LookRotation(movement);
+            // Arrive at the destination.
+            _rigidbody.position = _walkDestination;
+            _isWalking = false;
+        }
+    }
+
+    private void BlinkDash()
+    {
+        // Instantly turn to that direction
+        _rigidbody.rotation = Quaternion.LookRotation(_dashDestination - _rigidbody.position);
+        // Teleport to that location
+        _rigidbody.MovePosition(_dashDestination);
+        // Player is no longer dashing
+        _isDashing = false;
+    }
+
+    private void NormalDash()
+    {
+        // Compute how the player would move to get there in one step
+        Vector3 movement = _dashDestination - _rigidbody.position;
+        movement = new Vector3(movement.x, 0, movement.z);
+
+        // If destination is farther than the player can move since the last frame...
+        if (movement.magnitude > DashingMovementSpeed * Time.deltaTime)
+        {
+            // Move the maximum possible distance in the needed direction
+            _rigidbody.MovePosition(_rigidbody.position + DashingMovementSpeed * Time.deltaTime * movement.normalized);
+        }
+        else
+        {
+            // Arrive at the destination.
+            _rigidbody.position = _dashDestination;
+            _isDashing = false;
         }
     }
 }
