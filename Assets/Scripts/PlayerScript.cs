@@ -42,6 +42,13 @@ public class PlayerScript : MonoBehaviour
         _dashDestination = Vector3.zero;
     }
 
+    public void TeleportPlayer(Vector3 location)
+    {
+        _targetDestination = location;
+        _dashDestination = location;
+        transform.position = location;
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -65,11 +72,32 @@ public class PlayerScript : MonoBehaviour
         {
             // Implement basic blink first...
             // Instantly turn to that direction
-            _rigidbody.rotation = Quaternion.LookRotation(_dashDestination - _rigidbody.position);
-            // Teleport to that location
-            _rigidbody.MovePosition(_dashDestination);
-            // Player is no longer dashing
-            _isDashing = false;
+            // _rigidbody.rotation = Quaternion.LookRotation(_dashDestination - _rigidbody.position);
+            // // Teleport to that location
+            // _rigidbody.MovePosition(_dashDestination);
+            Vector3 movement = _targetDestination - _rigidbody.position;
+            movement = new Vector3(movement.x, 0, movement.z);
+            if (movement.magnitude > MovementSpeed * Time.deltaTime)
+            {
+                // Turn towards the intended destination
+                Quaternion intendedLookDir = Quaternion.LookRotation(movement);
+                _rigidbody.rotation = Quaternion.RotateTowards(
+                    _rigidbody.rotation,
+                    intendedLookDir,
+                    RotationSpeed * Time.deltaTime);
+                // Move the maximum possible distance in the needed direction
+                OnDashPressed();
+            }
+            else
+            {
+                // Will arrive at destination, so instant turn towards destination
+                _rigidbody.rotation = Quaternion.LookRotation(movement);
+                // Arrive at the destination.
+                _rigidbody.position = _targetDestination;
+                _isDashing = false;
+            }
+            // // Player is no longer dashing
+            // _isDashing = false;
         }
         else if (_isWalking)
         {
@@ -118,35 +146,82 @@ public class PlayerScript : MonoBehaviour
         }
     }
 
-    // Handle what happens when the space bar is pressed
-    private void OnSpaceBarPressed()
+    private bool CanMove(Vector3 dir, float distance)
     {
-        // Raycast to the onscreen location of mouse -> get global coordinates of that on the ground
+        var position = transform.position;
+        return !Physics.Raycast(position, dir, distance);
+    }
+
+    private bool TryMove(Vector3 baseMoveDir, float distance)
+    {
+        Vector3 moveDir = baseMoveDir;
+        bool canMove = CanMove(moveDir, distance);
+        if (!canMove)
+        {
+            // Cannot move diagonally
+            moveDir = new Vector3(baseMoveDir.x, 0f).normalized;
+            canMove = moveDir.x != 0f && CanMove(moveDir, distance);
+            if (!canMove)
+            {
+                // Cannot move horizontally
+                moveDir = new Vector3(0f, baseMoveDir.y).normalized;
+                canMove = moveDir.y != 0f && CanMove(moveDir, distance);
+            }
+        }
+
+        Debug.Log("can move is " + canMove);
+
+        if (canMove)
+        {
+            _rigidbody.position += moveDir * distance;
+        }
+
+        return canMove;
+    }
+
+    private void OnDashPressed()
+    {
         RaycastHit hit;
         if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
             out hit, Mathf.Infinity, movementLayerMask))
         {
+            _targetDestination = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
             // Compute new mouse location on the ground
             Vector3 location = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
-            // Correct dash location based on dash distance and "dash-through" vs "dash-to" status
             Vector3 dashMovement = location - _rigidbody.position;
-            if (MustDashMaxDistance)
-            {
-                dashMovement = dashMovement.normalized * MaxDashDistance;
-            }
-            else
-            {
-                // Simply cap the distance
-                if (dashMovement.sqrMagnitude > MaxDashDistance * MaxDashDistance)
-                {
-                    dashMovement = dashMovement.normalized * MaxDashDistance;
-                }
-            }
 
-            // Set the computed dash destination
-            _dashDestination = _rigidbody.position + dashMovement;
+            TryMove(dashMovement.normalized, MovementSpeed * 2 * Time.deltaTime);
+        }
+    }
+
+    // Handle what happens when the space bar is pressed
+    private void OnSpaceBarPressed()
+    {
+        // // Raycast to the onscreen location of mouse -> get global coordinates of that on the ground
+        // RaycastHit hit;
+        // if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
+        //     out hit, Mathf.Infinity, movementLayerMask))
+        // {
+        //     // Compute new mouse location on the ground
+        //     Vector3 location = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
+        //     // Correct dash location based on dash distance and "dash-through" vs "dash-to" status
+        //     Vector3 dashMovement = location - _rigidbody.position;
+        //     if (MustDashMaxDistance)
+        //     {
+        //         dashMovement = dashMovement.normalized * MaxDashDistance;
+        //     }
+        //     else
+        //     {
+        //         // Simply cap the distance
+        //         if (dashMovement.sqrMagnitude > MaxDashDistance * MaxDashDistance)
+        //         {
+        //             dashMovement = dashMovement.normalized * MaxDashDistance;
+        //         }
+        //     }
+        //
+        //     // Set the computed dash destination
+        //     _dashDestination = _rigidbody.position + dashMovement;
             // Set dashing status
             _isDashing = true;
-        }
     }
 }

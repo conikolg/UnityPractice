@@ -1,4 +1,4 @@
-using UnityEngine;
+ using UnityEngine;
 
 public class CameraScript : MonoBehaviour
 {
@@ -9,14 +9,14 @@ public class CameraScript : MonoBehaviour
     public Transform target;
 
     // Calculate height and distance from player with hypotenuse and angle
-    public float hypotenuse;
-    public float angleOfDepression;
-    public bool inDegrees;
+    private float hypotenuse = 17;
+    private float angleOfDepression = 65;
+    private bool inDegrees = true;
 
     // How quickly should changes in height or direction be applied
-    public float yDamping;
-    public float zDamping;
-    public float xDamping;
+    private float yDamping = 50;
+    private float zDamping = 50;
+    private float xDamping = 50;
     // public float rotationDamping;
 
     // Where the camera should be positioned
