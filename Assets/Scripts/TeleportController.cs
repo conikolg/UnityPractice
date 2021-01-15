@@ -34,9 +34,9 @@ public class TeleportController : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             PlayerScript player = other.gameObject.GetComponent<PlayerScript>();
-            Debug.Log(other.tag);
-            Debug.Log("inisde tp");
-            Debug.Log(elpasedTime);
+            // Debug.Log(other.tag);
+            // Debug.Log("inisde tp");
+            // Debug.Log(elpasedTime);
             if (elpasedTime > 2)
             {
                 player.TeleportPlayer(teleportLocation);

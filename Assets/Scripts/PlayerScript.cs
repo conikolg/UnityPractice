@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -23,6 +24,9 @@ public class PlayerScript : MonoBehaviour
     private Vector3 _dashDestination;
     private const float MaxDashDistance = 20f;
     private const bool MustDashMaxDistance = true;
+
+    private float dashSpeed = 20f;
+    private float dashTime = 1f;
 
     // Start is called before the first frame update
     void Start()
@@ -52,6 +56,11 @@ public class PlayerScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (_isDashing)
+        {
+            return;
+        }
+
         // Check if the player is holding left-click down this frame
         if (Input.GetMouseButton(0))
         {
@@ -60,7 +69,7 @@ public class PlayerScript : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            OnSpaceBarPressed();
+            StartCoroutine(Dash());
         }
     }
 
@@ -70,34 +79,6 @@ public class PlayerScript : MonoBehaviour
         // Dash priority higher than normal walking priority
         if (_isDashing)
         {
-            // Implement basic blink first...
-            // Instantly turn to that direction
-            // _rigidbody.rotation = Quaternion.LookRotation(_dashDestination - _rigidbody.position);
-            // // Teleport to that location
-            // _rigidbody.MovePosition(_dashDestination);
-            Vector3 movement = _targetDestination - _rigidbody.position;
-            movement = new Vector3(movement.x, 0, movement.z);
-            if (movement.magnitude > MovementSpeed * Time.deltaTime)
-            {
-                // Turn towards the intended destination
-                Quaternion intendedLookDir = Quaternion.LookRotation(movement);
-                _rigidbody.rotation = Quaternion.RotateTowards(
-                    _rigidbody.rotation,
-                    intendedLookDir,
-                    RotationSpeed * Time.deltaTime);
-                // Move the maximum possible distance in the needed direction
-                OnDashPressed();
-            }
-            else
-            {
-                // Will arrive at destination, so instant turn towards destination
-                _rigidbody.rotation = Quaternion.LookRotation(movement);
-                // Arrive at the destination.
-                _rigidbody.position = _targetDestination;
-                _isDashing = false;
-            }
-            // // Player is no longer dashing
-            // _isDashing = false;
         }
         else if (_isWalking)
         {
@@ -169,8 +150,6 @@ public class PlayerScript : MonoBehaviour
             }
         }
 
-        Debug.Log("can move is " + canMove);
-
         if (canMove)
         {
             _rigidbody.position += moveDir * distance;
@@ -179,49 +158,41 @@ public class PlayerScript : MonoBehaviour
         return canMove;
     }
 
-    private void OnDashPressed()
+    private IEnumerator Dash()
     {
+        Debug.Log("Starting the dash");
+        _isDashing = true;
+        float startTime = Time.time;
+
         RaycastHit hit;
-        if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
-            out hit, Mathf.Infinity, movementLayerMask))
+        Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
+            out hit, Mathf.Infinity, movementLayerMask);
+
+        //_targetDestination = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
+        // Compute new mouse location on the ground
+        Vector3 location = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
+        Vector3 dashMovement = location - _rigidbody.position;
+
+        while (Time.time < startTime + dashTime)
         {
-            _targetDestination = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
-            // Compute new mouse location on the ground
-            Vector3 location = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
-            Vector3 dashMovement = location - _rigidbody.position;
+            // Turn towards the intended destination
+            Quaternion intendedLookDir = Quaternion.LookRotation(dashMovement);
+            _rigidbody.rotation = Quaternion.RotateTowards(
+                _rigidbody.rotation,
+                intendedLookDir,
+                RotationSpeed * Time.deltaTime);
 
-            TryMove(dashMovement.normalized, MovementSpeed * 2 * Time.deltaTime);
+            if (!TryMove(dashMovement.normalized, MovementSpeed * 2 * Time.deltaTime))
+            {
+                break;
+            }
+
+            yield return null;
         }
-    }
 
-    // Handle what happens when the space bar is pressed
-    private void OnSpaceBarPressed()
-    {
-        // // Raycast to the onscreen location of mouse -> get global coordinates of that on the ground
-        // RaycastHit hit;
-        // if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
-        //     out hit, Mathf.Infinity, movementLayerMask))
-        // {
-        //     // Compute new mouse location on the ground
-        //     Vector3 location = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
-        //     // Correct dash location based on dash distance and "dash-through" vs "dash-to" status
-        //     Vector3 dashMovement = location - _rigidbody.position;
-        //     if (MustDashMaxDistance)
-        //     {
-        //         dashMovement = dashMovement.normalized * MaxDashDistance;
-        //     }
-        //     else
-        //     {
-        //         // Simply cap the distance
-        //         if (dashMovement.sqrMagnitude > MaxDashDistance * MaxDashDistance)
-        //         {
-        //             dashMovement = dashMovement.normalized * MaxDashDistance;
-        //         }
-        //     }
-        //
-        //     // Set the computed dash destination
-        //     _dashDestination = _rigidbody.position + dashMovement;
-            // Set dashing status
-            _isDashing = true;
+        Debug.Log("Dash is over");
+        _targetDestination = transform.position;
+        _isWalking = false;
+        _isDashing = false;
     }
 }
