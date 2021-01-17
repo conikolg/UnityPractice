@@ -23,7 +23,10 @@ public class PlayerScript : MonoBehaviour
     private const float DashingMovementSpeed = 50f; // How quickly player can walk in units/second
     private const float MaxDashDistance = 8f; // How far, at most, can the dash can carry the player
     private const float MinDashDistance = 4f; // How far, at least, can the dash can carry the player
-    private Vector3 _dashDestination;
+    private Vector3 _dashDestination; // Where the player is trying to dash to
+
+    /* Teleportation parameters */
+    private bool _isTeleporting;
 
     // Start is called before the first frame update
     void Start()
@@ -41,6 +44,9 @@ public class PlayerScript : MonoBehaviour
         // Set dash status to not dashing
         _isDashing = false;
         _dashDestination = Vector3.zero;
+
+        // Set teleportation status
+        _isTeleporting = false;
     }
 
     // Update is called once per frame
@@ -61,6 +67,11 @@ public class PlayerScript : MonoBehaviour
     // FixedUpdate is called by the Physics System
     private void FixedUpdate()
     {
+        // Teleport priority higher than dashing priority
+        if (_isTeleporting)
+        {
+        }
+
         // Dash priority higher than normal walking priority
         if (_isDashing)
         {
@@ -93,36 +104,41 @@ public class PlayerScript : MonoBehaviour
     // Handle what happens when the space bar is pressed
     private void OnSpaceBarPressed()
     {
-        // Caches the rigidbody position
-        Vector3 currentPosition = _rigidbody.position;
-
-        // Raycast to the onscreen location of mouse -> get global coordinates of that on the ground
-        RaycastHit hit;
-        if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
-            out hit, Mathf.Infinity, movementLayerMask))
+        // Disable dashing while already mid-dash
+        if (!_isDashing)
         {
-            // Compute new mouse location on the ground
-            Vector3 location = new Vector3(hit.point.x, currentPosition.y, hit.point.z);
-            // Compute movement vector based on input location
-            Vector3 dashMovement = location - currentPosition;
+            // Caches the rigidbody position
+            Vector3 currentPosition = _rigidbody.position;
 
-            /* Correct dash movement for dash range boundaries */
-            // Cap dash movement if trying to go too far
-            if (dashMovement.sqrMagnitude > MaxDashDistance * MaxDashDistance)
-                dashMovement = dashMovement.normalized * MaxDashDistance;
-            // Check against the dash distance floor as well
-            else if (dashMovement.sqrMagnitude < MinDashDistance * MinDashDistance)
-                dashMovement = dashMovement.normalized * MinDashDistance;
+            // Raycast to the onscreen location of mouse -> get global coordinates of that on the ground
+            RaycastHit hit;
+            if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
+                out hit, Mathf.Infinity, movementLayerMask))
+            {
+                // Compute new mouse location on the ground
+                Vector3 location = new Vector3(hit.point.x, currentPosition.y, hit.point.z);
+                // Compute movement vector based on input location
+                Vector3 dashMovement = location - currentPosition;
 
-            // Set the computed dash destination
-            _dashDestination = currentPosition + dashMovement;
-            // Instantly turn to that direction
-            _rigidbody.rotation = Quaternion.LookRotation(_dashDestination - _rigidbody.position);
-            // Set dashing status
-            _isDashing = true;
+                /* Correct dash movement for dash range boundaries */
+                // Cap dash movement if trying to go too far
+                if (dashMovement.sqrMagnitude > MaxDashDistance * MaxDashDistance)
+                    dashMovement = dashMovement.normalized * MaxDashDistance;
+                // Check against the dash distance floor as well
+                else if (dashMovement.sqrMagnitude < MinDashDistance * MinDashDistance)
+                    dashMovement = dashMovement.normalized * MinDashDistance;
+
+                // Set the computed dash destination
+                _dashDestination = currentPosition + dashMovement;
+                // Instantly turn to that direction
+                _rigidbody.rotation = Quaternion.LookRotation(_dashDestination - _rigidbody.position);
+                // Set dashing status
+                _isDashing = true;
+            }
         }
     }
 
+    // Handle one game tick of normal walking movement
     private void Walk()
     {
         // Compute how the player would move to get there in one step
@@ -151,6 +167,7 @@ public class PlayerScript : MonoBehaviour
         }
     }
 
+    // Basic dash that's really just an instant teleport
     private void BlinkDash()
     {
         // Instantly turn to that direction
@@ -161,6 +178,7 @@ public class PlayerScript : MonoBehaviour
         _isDashing = false;
     }
 
+    // Improved dash that is essentially forced walking, but at a higher speed
     private void NormalDash()
     {
         // Compute how the player would move to get there in one step
@@ -179,5 +197,10 @@ public class PlayerScript : MonoBehaviour
             _rigidbody.position = _dashDestination;
             _isDashing = false;
         }
+    }
+
+    public void TeleportTo(Vector3 location)
+    {
+        _isTeleporting = true;
     }
 }
