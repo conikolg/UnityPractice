@@ -13,52 +13,52 @@ public class PlayerScript : MonoBehaviour
     public LayerMask dashingCollisionLayers;
 
     // Reference to the RigidBody for this player
-    private Rigidbody _rigidbody;
+    private Rigidbody playerRigidbody;
 
     /* Normal walking movement parameters */
-    private bool _isWalking; // If the player is walking 
-    private Vector3 _targetDestination; // Where the player is trying to walk/move to
+    private bool isWalking; // If the player is walking 
+    private Vector3 targetDestination; // Where the player is trying to walk/move to
     private const float MovementSpeed = 8f; // How quickly player can move in units/second
     private const float RotationSpeed = 1080f; // How quickly player can turn in degrees/second
 
     /* Dash movement parameters */
-    private bool _isDashing;
-    private Vector3 _dashDestination;
+    private bool isDashing;
+    private Vector3 dashDestination;
     private const float MaxDashDistance = 20f;
     private const bool MustDashMaxDistance = true;
 
     private float dashSpeed = 20f;
-    private float dashTime = 1f;
+    private float dashTime = 0.5f;
 
     // Start is called before the first frame update
     void Start()
     {
         // Initialize RigidBody object
-        _rigidbody = GetComponent<Rigidbody>();
+        playerRigidbody = GetComponent<Rigidbody>();
 
         // Set position to center, not inside the ground
         transform.position = new Vector3(0, 1, 0);
 
         // Set target destination to player's own position initially
-        _isWalking = false;
-        _targetDestination = Vector3.zero;
+        isWalking = false;
+        targetDestination = Vector3.zero;
 
         // Set dash status to not dashing
-        _isDashing = false;
-        _dashDestination = Vector3.zero;
+        isDashing = false;
+        dashDestination = Vector3.zero;
     }
 
     public void TeleportPlayer(Vector3 location)
     {
-        _targetDestination = location;
-        _dashDestination = location;
+        targetDestination = location;
+        dashDestination = location;
         transform.position = location;
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (_isDashing)
+        if (isDashing)
         {
             return;
         }
@@ -79,13 +79,13 @@ public class PlayerScript : MonoBehaviour
     private void FixedUpdate()
     {
         // Dash priority higher than normal walking priority
-        if (_isDashing)
+        if (isDashing)
         {
         }
-        else if (_isWalking)
+        else if (isWalking)
         {
             // Compute how the player would move to get there in one step
-            Vector3 movement = _targetDestination - _rigidbody.position;
+            Vector3 movement = targetDestination - playerRigidbody.position;
             movement = new Vector3(movement.x, 0, movement.z);
 
             // If destination is farther than the player can move since the last frame...
@@ -93,21 +93,21 @@ public class PlayerScript : MonoBehaviour
             {
                 // Turn towards the intended destination
                 Quaternion intendedLookDir = Quaternion.LookRotation(movement);
-                _rigidbody.rotation = Quaternion.RotateTowards(
-                    _rigidbody.rotation,
+                playerRigidbody.rotation = Quaternion.RotateTowards(
+                    playerRigidbody.rotation,
                     intendedLookDir,
                     RotationSpeed * Time.deltaTime);
                 // Move the maximum possible distance in the needed direction
-                _rigidbody.MovePosition(_rigidbody.position +
+                playerRigidbody.MovePosition(playerRigidbody.position +
                                         MovementSpeed * Time.deltaTime * movement.normalized);
             }
             else
             {
                 // Will arrive at destination, so instant turn towards destination
-                _rigidbody.rotation = Quaternion.LookRotation(movement);
+                playerRigidbody.rotation = Quaternion.LookRotation(movement);
                 // Arrive at the destination.
-                _rigidbody.position = _targetDestination;
-                _isWalking = false;
+                playerRigidbody.position = targetDestination;
+                isWalking = false;
             }
         }
     }
@@ -124,36 +124,36 @@ public class PlayerScript : MonoBehaviour
             movementLayerMask))
         {
             // Compute new target destination of player
-            _targetDestination = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
-            _isWalking = true;
+            targetDestination = new Vector3(hit.point.x, playerRigidbody.position.y, hit.point.z);
+            isWalking = true;
         }
     }
 
     private bool CanMove(Vector3 dir, float distance)
     {
-        return !Physics.Raycast(_rigidbody.position, dir, distance, dashingCollisionLayers);
+        return !Physics.Raycast(playerRigidbody.position, dir, distance, dashingCollisionLayers);
     }
 
     private bool TryMove(Vector3 baseMoveDir, float distance)
     {
         Vector3 moveDir = baseMoveDir;
         bool canMove = CanMove(moveDir, distance);
-        if (!canMove)
-        {
-            // Cannot move diagonally
-            moveDir = new Vector3(baseMoveDir.x, 0f, 0f).normalized;
-            canMove = moveDir.x != 0f && CanMove(moveDir, distance);
-            if (!canMove)
-            {
-                // Cannot move horizontally
-                moveDir = new Vector3(0f, 0f, baseMoveDir.z).normalized;
-                canMove = moveDir.y != 0f && CanMove(moveDir, distance);
-            }
-        }
+        // if (!canMove)
+        // {
+        //     // Cannot move diagonally
+        //     moveDir = new Vector3(baseMoveDir.x, 0f, 0f).normalized;
+        //     canMove = moveDir.x != 0f && CanMove(moveDir, distance);
+        //     if (!canMove)
+        //     {
+        //         // Cannot move horizontally
+        //         moveDir = new Vector3(0f, 0f, baseMoveDir.z).normalized;
+        //         canMove = moveDir.y != 0f && CanMove(moveDir, distance);
+        //     }
+        // }
 
         if (canMove)
         {
-            _rigidbody.position += moveDir * distance;
+            playerRigidbody.position += moveDir * distance;
         }
 
         return canMove;
@@ -162,38 +162,38 @@ public class PlayerScript : MonoBehaviour
     private IEnumerator Dash()
     {
         Debug.Log("Starting the dash");
-        _isDashing = true;
+        isDashing = true;
         float startTime = Time.time;
 
         RaycastHit hit;
         Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
             out hit, Mathf.Infinity, movementLayerMask);
 
-        //_targetDestination = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
+        //targetDestination = new Vector3(hit.point.x, playerRigidbody.position.y, hit.point.z);
         // Compute new mouse location on the ground
-        Vector3 location = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
+        Vector3 location = new Vector3(hit.point.x, playerRigidbody.position.y, hit.point.z);
+        Vector3 dashMovement = location - playerRigidbody.position;
 
         while (Time.time < startTime + dashTime)
         {
             // Turn towards the intended destination
-            Vector3 dashMovement = location - _rigidbody.position;
             Quaternion intendedLookDir = Quaternion.LookRotation(dashMovement);
-            _rigidbody.rotation = Quaternion.RotateTowards(
-                _rigidbody.rotation,
+            playerRigidbody.rotation = Quaternion.RotateTowards(
+                playerRigidbody.rotation,
                 intendedLookDir,
                 RotationSpeed * Time.deltaTime);
 
-            if (!TryMove(dashMovement.normalized, MovementSpeed * 2 * Time.deltaTime))
+            if (!TryMove(dashMovement.normalized, dashSpeed * Time.deltaTime))
             {
                 break;
             }
 
-            yield return null;
+            yield return new WaitForFixedUpdate();
         }
 
         Debug.Log("Dash is over");
-        _targetDestination = transform.position;
-        _isWalking = false;
-        _isDashing = false;
+        targetDestination = transform.position;
+        isWalking = false;
+        isDashing = false;
     }
 }
