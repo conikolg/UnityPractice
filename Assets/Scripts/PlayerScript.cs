@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -9,6 +10,7 @@ public class PlayerScript : MonoBehaviour
 
     // Layers to consider when calculating world position from mouse position for movement commands
     public LayerMask movementLayerMask;
+    public LayerMask dashingCollisionLayers;
 
     // Reference to the RigidBody for this player
     private Rigidbody _rigidbody;
@@ -129,8 +131,7 @@ public class PlayerScript : MonoBehaviour
 
     private bool CanMove(Vector3 dir, float distance)
     {
-        var position = transform.position;
-        return !Physics.Raycast(position, dir, distance);
+        return !Physics.Raycast(_rigidbody.position, dir, distance, dashingCollisionLayers);
     }
 
     private bool TryMove(Vector3 baseMoveDir, float distance)
@@ -140,12 +141,12 @@ public class PlayerScript : MonoBehaviour
         if (!canMove)
         {
             // Cannot move diagonally
-            moveDir = new Vector3(baseMoveDir.x, 0f).normalized;
+            moveDir = new Vector3(baseMoveDir.x, 0f, 0f).normalized;
             canMove = moveDir.x != 0f && CanMove(moveDir, distance);
             if (!canMove)
             {
                 // Cannot move horizontally
-                moveDir = new Vector3(0f, baseMoveDir.y).normalized;
+                moveDir = new Vector3(0f, 0f, baseMoveDir.z).normalized;
                 canMove = moveDir.y != 0f && CanMove(moveDir, distance);
             }
         }
@@ -171,11 +172,11 @@ public class PlayerScript : MonoBehaviour
         //_targetDestination = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
         // Compute new mouse location on the ground
         Vector3 location = new Vector3(hit.point.x, _rigidbody.position.y, hit.point.z);
-        Vector3 dashMovement = location - _rigidbody.position;
 
         while (Time.time < startTime + dashTime)
         {
             // Turn towards the intended destination
+            Vector3 dashMovement = location - _rigidbody.position;
             Quaternion intendedLookDir = Quaternion.LookRotation(dashMovement);
             _rigidbody.rotation = Quaternion.RotateTowards(
                 _rigidbody.rotation,

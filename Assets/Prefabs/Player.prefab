@@ -118,6 +118,9 @@ MonoBehaviour:
   movementLayerMask:
     serializedVersion: 2
     m_Bits: 64
+  dashingCollisionLayers:
+    serializedVersion: 2
+    m_Bits: 257
 --- !u!54 &2879239316629127991
 Rigidbody:
   m_ObjectHideFlags: 0
