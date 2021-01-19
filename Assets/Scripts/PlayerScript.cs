@@ -99,7 +99,7 @@ public class PlayerScript : MonoBehaviour
                     RotationSpeed * Time.deltaTime);
                 // Move the maximum possible distance in the needed direction
                 playerRigidbody.MovePosition(playerRigidbody.position +
-                                        MovementSpeed * Time.deltaTime * movement.normalized);
+                                             MovementSpeed * Time.deltaTime * movement.normalized);
             }
             else
             {
@@ -161,39 +161,42 @@ public class PlayerScript : MonoBehaviour
 
     private IEnumerator Dash()
     {
-        Debug.Log("Starting the dash");
         isDashing = true;
-        float startTime = Time.time;
 
         RaycastHit hit;
-        Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
-            out hit, Mathf.Infinity, movementLayerMask);
-
-        //targetDestination = new Vector3(hit.point.x, playerRigidbody.position.y, hit.point.z);
-        // Compute new mouse location on the ground
-        Vector3 location = new Vector3(hit.point.x, playerRigidbody.position.y, hit.point.z);
-        Vector3 dashMovement = location - playerRigidbody.position;
-
-        while (Time.time < startTime + dashTime)
+        if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
+            out hit, Mathf.Infinity, movementLayerMask))
         {
-            // Turn towards the intended destination
-            Quaternion intendedLookDir = Quaternion.LookRotation(dashMovement);
-            playerRigidbody.rotation = Quaternion.RotateTowards(
-                playerRigidbody.rotation,
-                intendedLookDir,
-                RotationSpeed * Time.deltaTime);
+            print("Starting the dash");
+            float startTime = Time.time;
 
-            if (!TryMove(dashMovement.normalized, dashSpeed * Time.deltaTime))
+            //targetDestination = new Vector3(hit.point.x, playerRigidbody.position.y, hit.point.z);
+            // Compute new mouse location on the ground
+            Vector3 location = new Vector3(hit.point.x, playerRigidbody.position.y, hit.point.z);
+            Vector3 dashMovement = location - playerRigidbody.position;
+
+            while (Time.time < startTime + dashTime)
             {
-                break;
+                // Turn towards the intended destination
+                Quaternion intendedLookDir = Quaternion.LookRotation(dashMovement);
+                playerRigidbody.rotation = Quaternion.RotateTowards(
+                    playerRigidbody.rotation,
+                    intendedLookDir,
+                    RotationSpeed * Time.deltaTime);
+
+                if (!TryMove(dashMovement.normalized, dashSpeed * Time.deltaTime))
+                {
+                    break;
+                }
+
+                yield return new WaitForFixedUpdate();
             }
 
-            yield return new WaitForFixedUpdate();
+            print("Dash is over");
+            targetDestination = transform.position;
+            isWalking = false;
         }
 
-        Debug.Log("Dash is over");
-        targetDestination = transform.position;
-        isWalking = false;
         isDashing = false;
     }
 }
