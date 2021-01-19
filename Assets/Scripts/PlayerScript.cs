@@ -134,6 +134,8 @@ public class PlayerScript : MonoBehaviour
                 _rigidbody.rotation = Quaternion.LookRotation(_dashDestination - _rigidbody.position);
                 // Set dashing status
                 _isDashing = true;
+                // Cancel walk movement
+                _isWalking = false;
             }
         }
     }
