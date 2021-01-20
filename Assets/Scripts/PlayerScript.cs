@@ -6,10 +6,10 @@ using UnityEngine.Serialization;
 public class PlayerScript : MonoBehaviour
 {
     // Reference to main game camera
-    [FormerlySerializedAs("MainCamera")] public Camera mainCamera;
+    public Camera mainCamera;
 
     // Layers to consider when calculating world position from mouse position for movement commands
-    public LayerMask movementLayerMask;
+    public LayerMask mouseClickLayerMask;
     public LayerMask dashingCollisionLayers;
 
     // Reference to the RigidBody for this player
@@ -78,11 +78,13 @@ public class PlayerScript : MonoBehaviour
     // FixedUpdate is called by the Physics System
     private void FixedUpdate()
     {
-        // Dash priority higher than normal walking priority
+        // Will run dash coroutine
         if (isDashing)
         {
+            return;
         }
-        else if (isWalking)
+        
+        if (isWalking)
         {
             // Compute how the player would move to get there in one step
             Vector3 movement = targetDestination - playerRigidbody.position;
@@ -121,7 +123,7 @@ public class PlayerScript : MonoBehaviour
             mainCamera.ScreenPointToRay(Input.mousePosition),
             out hit,
             Mathf.Infinity,
-            movementLayerMask))
+            mouseClickLayerMask))
         {
             // Compute new target destination of player
             targetDestination = new Vector3(hit.point.x, playerRigidbody.position.y, hit.point.z);
@@ -165,16 +167,18 @@ public class PlayerScript : MonoBehaviour
 
         RaycastHit hit;
         if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
-            out hit, Mathf.Infinity, movementLayerMask))
+            out hit, Mathf.Infinity, mouseClickLayerMask))
         {
             print("Starting the dash");
             float startTime = Time.time;
 
             //targetDestination = new Vector3(hit.point.x, playerRigidbody.position.y, hit.point.z);
             // Compute new mouse location on the ground
-            Vector3 location = new Vector3(hit.point.x, playerRigidbody.position.y, hit.point.z);
-            Vector3 dashMovement = location - playerRigidbody.position;
+            var playerRigidbodyPosition = playerRigidbody.position;
+            Vector3 location = new Vector3(hit.point.x, playerRigidbodyPosition.y, hit.point.z);
+            Vector3 dashMovement = location - playerRigidbodyPosition;
 
+            // Total dash distance will be dashTime * dashSpeed
             while (Time.time < startTime + dashTime)
             {
                 // Turn towards the intended destination
