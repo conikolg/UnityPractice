@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -25,8 +26,7 @@ public class PlayerScript : MonoBehaviour
     private const float MinDashDistance = 4f; // How far, at least, can the dash can carry the player
     private Vector3 _dashDestination; // Where the player is trying to dash to
 
-    /* Teleportation parameters */
-    private bool _isTeleporting;
+    private bool _checkingStuck;
 
     // Start is called before the first frame update
     void Start()
@@ -44,9 +44,6 @@ public class PlayerScript : MonoBehaviour
         // Set dash status to not dashing
         _isDashing = false;
         _dashDestination = Vector3.zero;
-
-        // Set teleportation status
-        _isTeleporting = false;
     }
 
     // Update is called once per frame
@@ -58,24 +55,36 @@ public class PlayerScript : MonoBehaviour
             OnMouse1Click();
         }
 
+        // Check if the player pressed the space bar this frame
         if (Input.GetKeyDown(KeyCode.Space))
         {
             OnSpaceBarPressed();
         }
+        
+        if (!_checkingStuck)
+        {
+            StartCoroutine(CheckStuck());
+        }
+    }
+
+    IEnumerator CheckStuck()
+    {
+        _checkingStuck = true;
+        yield return new WaitForFixedUpdate();
+        if (_isDashing && _rigidbody.velocity.sqrMagnitude < 0.01f)
+        {
+            print("Coroutine stopped everything");
+            StopDashing();
+        }
+        _checkingStuck = false;
     }
 
     // FixedUpdate is called by the Physics System
     private void FixedUpdate()
     {
-        // Teleport priority higher than dashing priority
-        if (_isTeleporting)
-        {
-        }
-
         // Dash priority higher than normal walking priority
         if (_isDashing)
         {
-            // BlinkDash();
             NormalDash();
         }
         else if (_isWalking)
@@ -157,27 +166,17 @@ public class PlayerScript : MonoBehaviour
                 intendedLookDir,
                 RotationSpeed * Time.deltaTime);
             // Move the maximum possible distance in the needed direction
-            _rigidbody.MovePosition(_rigidbody.position + WalkingMovementSpeed * Time.deltaTime * movement.normalized);
+            _rigidbody.velocity = WalkingMovementSpeed * movement.normalized;
         }
         else
         {
             // Will arrive at destination, so instant turn towards destination
             _rigidbody.rotation = Quaternion.LookRotation(movement);
             // Arrive at the destination.
-            _rigidbody.position = _walkDestination;
+            _rigidbody.MovePosition(_walkDestination);
+            _rigidbody.velocity = Vector3.zero;
             _isWalking = false;
         }
-    }
-
-    // Basic dash that's really just an instant teleport
-    private void BlinkDash()
-    {
-        // Instantly turn to that direction
-        _rigidbody.rotation = Quaternion.LookRotation(_dashDestination - _rigidbody.position);
-        // Teleport to that location
-        _rigidbody.MovePosition(_dashDestination);
-        // Player is no longer dashing
-        _isDashing = false;
     }
 
     // Improved dash that is essentially forced walking, but at a higher speed
@@ -191,12 +190,13 @@ public class PlayerScript : MonoBehaviour
         if (movement.magnitude > DashingMovementSpeed * Time.deltaTime)
         {
             // Move the maximum possible distance in the needed direction
-            _rigidbody.MovePosition(_rigidbody.position + DashingMovementSpeed * Time.deltaTime * movement.normalized);
+            _rigidbody.velocity = DashingMovementSpeed * movement.normalized;
         }
         else
         {
             // Arrive at the destination.
-            _rigidbody.position = _dashDestination;
+            _rigidbody.MovePosition(_dashDestination);
+            _rigidbody.velocity = Vector3.zero;
             _isDashing = false;
         }
     }
@@ -205,8 +205,25 @@ public class PlayerScript : MonoBehaviour
     {
         // Set new location - assume no change in y value
         _rigidbody.MovePosition(new Vector3(location.x, _rigidbody.position.y, location.z));
-        // Cancel any preexisting dashing/walking
+        StopAllMovement();
+    }
+
+    public void StopAllMovement()
+    {
+        StopWalking();
+        StopDashing();
+        _rigidbody.velocity = Vector3.zero;
+    }
+
+    private void StopWalking()
+    {
+        _isWalking = false;
+        _walkDestination = _rigidbody.position;
+    }
+
+    private void StopDashing()
+    {
         _isDashing = false;
-        _isWalking = true;
+        _dashDestination = _rigidbody.position;
     }
 }
