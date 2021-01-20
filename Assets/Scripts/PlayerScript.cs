@@ -20,7 +20,7 @@ public class PlayerScript : MonoBehaviour
     private Vector3 targetDestination; // Where the player is trying to walk/move to
     private const float MovementSpeed = 8f; // How quickly player can move in units/second
     private const float RotationSpeed = 1080f; // How quickly player can turn in degrees/second
-    private float startTime;
+    private float startingDashTime;
 
     /* Dash movement parameters */
     private bool isDashing;
@@ -55,6 +55,8 @@ public class PlayerScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        var startTime = DateTime.Now;
+        
         if (isDashing)
         {
             return;
@@ -71,15 +73,20 @@ public class PlayerScript : MonoBehaviour
             StartDash();
             //StartCoroutine(Dash());
         }
+        
+        var elapsed = (DateTime.Now - startTime).Milliseconds;
+        print("PlayerScript Update: " + elapsed);
     }
 
     // FixedUpdate is called by the Physics System
     private void FixedUpdate()
     {
+        var startTime = DateTime.Now;
+        
         // Will run dash coroutine
         if (isDashing)
         {
-            if (Time.time < startTime + dashTime)
+            if (Time.time < startingDashTime + dashTime)
             {
                 // Turn towards the intended destination
                 Quaternion intendedLookDir = Quaternion.LookRotation(dashMovement);
@@ -129,6 +136,9 @@ public class PlayerScript : MonoBehaviour
                 isWalking = false;
             }
         }
+        
+        var elapsed = (DateTime.Now - startTime).Milliseconds;
+        print("PlayerScript LateUpdate: " + elapsed);
     }
 
     // Handle what happens when Mouse 1 is clicked
@@ -169,7 +179,7 @@ public class PlayerScript : MonoBehaviour
 
     private void EndDash()
     {
-        print("Dash is over");
+        //print("Dash is over");
         targetDestination = transform.position;
         isWalking = false;
         isDashing = false;
@@ -181,9 +191,9 @@ public class PlayerScript : MonoBehaviour
         if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
             out hit, Mathf.Infinity, mouseClickLayerMask))
         {
-            startTime = Time.time;
+            startingDashTime = Time.time;
             isDashing = true;
-            print("Starting the dash");
+            //print("Starting the dash");
 
             //targetDestination = new Vector3(hit.point.x, playerRigidbody.position.y, hit.point.z);
             // Compute new mouse location on the ground

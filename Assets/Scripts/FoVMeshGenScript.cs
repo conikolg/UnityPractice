@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class FoVMeshGenScript : MonoBehaviour
@@ -20,6 +21,8 @@ public class FoVMeshGenScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        var startTime = DateTime.Now;
+        
         Vector3 worldPosition = transform.parent.position;
 
         // Will have one mesh vertex around the edge of field of vision (like a circle)
@@ -67,37 +70,9 @@ public class FoVMeshGenScript : MonoBehaviour
 
         // Don't let the generated mesh rotate with the rest of the player
         transform.rotation = Quaternion.identity;
+        
+        var elapsed = (DateTime.Now - startTime).Milliseconds;
+        print("FovMeshGenScript Update: " + elapsed);
     }
-
-    // Generates a simple square mesh centered on transform.position
-    private void GenerateBasicSquareMesh()
-    {
-        const float squareHalfSideLength = 5f;
-
-        Vector3[] vertices =
-        {
-            new Vector3(squareHalfSideLength, 0, squareHalfSideLength),
-            new Vector3(-squareHalfSideLength, 0, squareHalfSideLength),
-            new Vector3(-squareHalfSideLength, 0, -squareHalfSideLength),
-            new Vector3(squareHalfSideLength, 0, -squareHalfSideLength)
-        };
-
-        int[] triangles =
-        {
-            0, 2, 1,
-            2, 0, 3
-        };
-
-        Vector3[] normals =
-        {
-            Vector3.up,
-            Vector3.up,
-            Vector3.up,
-            Vector3.up
-        };
-
-        _mesh.vertices = vertices;
-        _mesh.normals = normals;
-        _mesh.triangles = triangles;
-    }
+    
 }

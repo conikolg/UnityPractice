@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -58,6 +59,9 @@ public class ProjectFog : MonoBehaviour
 
     private IEnumerator BlendFog()
     {
+        
+        var startTime = DateTime.Now;
+        
         while (blendAmount < 1)
         {
             // increase the interpolation amount
@@ -67,6 +71,10 @@ public class ProjectFog : MonoBehaviour
             projector.material.SetFloat("_Blend", blendAmount);
             yield return null;
         }
+        
+                
+        var elapsed = (DateTime.Now - startTime).Milliseconds;
+        print("ProjectFog BlendFog1Cycle: " + elapsed);
 
         // once finished blending, swap the textures and start a new blend
         StartNewBlend();

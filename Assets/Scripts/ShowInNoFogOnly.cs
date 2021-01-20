@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -72,6 +73,9 @@ public class ShowInNoFogOnly : MonoBehaviour
 
     void LateUpdate()
     {
+        var startTime = DateTime.Now;
+        
+        
         // If no renderer is available, this whole game object disables?
         // TODO: What is this if statement for?
         if (!myRenderer)
@@ -84,5 +88,8 @@ public class ShowInNoFogOnly : MonoBehaviour
         myRenderer.enabled = GetColorAtPosition().grayscale >= threshold;
         foreach(MeshRenderer renderer in childRenderers)
             renderer.enabled = GetColorAtPosition().grayscale >= threshold;
+        
+        var elapsed = (DateTime.Now - startTime).Milliseconds;
+        print("ShowInNoFogOnly LateUpdate: " + elapsed);
     }
 }
