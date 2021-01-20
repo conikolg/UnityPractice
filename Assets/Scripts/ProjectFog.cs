@@ -59,22 +59,22 @@ public class ProjectFog : MonoBehaviour
 
     private IEnumerator BlendFog()
     {
-        
-        var startTime = DateTime.Now;
-        
+
         while (blendAmount < 1)
         {
+            var startTime = DateTime.Now;
+            
             // increase the interpolation amount
             blendAmount += Time.deltaTime * blendSpeed;
             // Set the blend property so the shader knows how much to lerp
             // by when checking the alpha value
             projector.material.SetFloat("_Blend", blendAmount);
+            
+            var elapsed = (DateTime.Now - startTime).Milliseconds;
+            print("ProjectFog BlendFog1Cycle: " + elapsed);
+            
             yield return null;
         }
-        
-                
-        var elapsed = (DateTime.Now - startTime).Milliseconds;
-        print("ProjectFog BlendFog1Cycle: " + elapsed);
 
         // once finished blending, swap the textures and start a new blend
         StartNewBlend();
