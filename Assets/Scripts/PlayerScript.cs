@@ -203,6 +203,10 @@ public class PlayerScript : MonoBehaviour
 
     public void TeleportTo(Vector3 location)
     {
-        _isTeleporting = true;
+        // Set new location - assume no change in y value
+        _rigidbody.MovePosition(new Vector3(location.x, _rigidbody.position.y, location.z));
+        // Cancel any preexisting dashing/walking
+        _isDashing = false;
+        _isWalking = true;
     }
 }

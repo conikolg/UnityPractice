@@ -1,5 +1,4 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class TeleporterAreaOfEffect : MonoBehaviour
 {
@@ -24,21 +23,22 @@ public class TeleporterAreaOfEffect : MonoBehaviour
         }
         else
         {
-            Debug.Log("Player would have teleported!");
+            Debug.Log("Player should have teleported!");
+            player.TeleportTo(new Vector3(0f, 0f, 150f));
         }
     }
 
-    private void OnTriggerExit(Collider other)
-    {
-        PlayerScript player = other.GetComponent<PlayerScript>();
-
-        if (_time + TimeThreshold > Time.unscaledTime)
-        {
-            Debug.Log("Player is leaving - would not have teleported!");
-        }
-        else
-        {
-            Debug.Log("Player is leaving - would have teleported!");
-        }
-    }
+    // private void OnTriggerExit(Collider other)
+    // {
+    //     PlayerScript player = other.GetComponent<PlayerScript>();
+    //
+    //     if (_time + TimeThreshold > Time.unscaledTime)
+    //     {
+    //         Debug.Log("Player is leaving - should not have teleported!");
+    //     }
+    //     else
+    //     {
+    //         Debug.Log("Player is leaving - should have teleported!");
+    //     }
+    // }
 }

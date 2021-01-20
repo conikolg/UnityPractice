@@ -14,9 +14,9 @@ public class CameraScript : MonoBehaviour
     public bool inDegrees;
 
     // How quickly should changes in height or direction be applied
+    public float xDamping;
     public float yDamping;
     public float zDamping;
-    public float xDamping;
     // public float rotationDamping;
 
     // Where the camera should be positioned
