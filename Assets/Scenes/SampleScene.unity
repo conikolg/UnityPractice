@@ -780,9 +780,9 @@ MonoBehaviour:
   hypotenuse: 17
   angleOfDepression: 65
   inDegrees: 1
-  xDamping: 7
-  yDamping: 7
-  zDamping: 7
+  xDamping: 20
+  yDamping: 20
+  zDamping: 20
 --- !u!1 &1051389892
 GameObject:
   m_ObjectHideFlags: 0
