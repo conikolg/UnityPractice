@@ -21,7 +21,7 @@ public class FoVMeshGenScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        var startTime = DateTime.Now;
+ 
         
         Vector3 worldPosition = transform.parent.position;
 
@@ -71,8 +71,7 @@ public class FoVMeshGenScript : MonoBehaviour
         // Don't let the generated mesh rotate with the rest of the player
         transform.rotation = Quaternion.identity;
         
-        var elapsed = (DateTime.Now - startTime).Milliseconds;
-        print("FovMeshGenScript Update: " + elapsed);
+ 
     }
     
 }

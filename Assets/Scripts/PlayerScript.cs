@@ -5,6 +5,8 @@ using UnityEngine.Serialization;
 
 public class PlayerScript : MonoBehaviour
 {
+    [SerializeField] private Transform pfBulletPhysics;
+    
     // Reference to main game camera
     public Camera mainCamera;
 
@@ -20,7 +22,6 @@ public class PlayerScript : MonoBehaviour
     private Vector3 targetDestination; // Where the player is trying to walk/move to
     private const float MovementSpeed = 8f; // How quickly player can move in units/second
     private const float RotationSpeed = 1080f; // How quickly player can turn in degrees/second
-    private float startingDashTime;
 
     /* Dash movement parameters */
     private bool isDashing;
@@ -28,6 +29,14 @@ public class PlayerScript : MonoBehaviour
     private float dashTime = 0.5f;
     private Vector3 dashLocation;
     private Vector3 dashMovement;
+    private float startingDashTime;
+
+    private bool isHooking;
+    private float hookSpeed = 20f;
+    private float hookTime = 0.5f;
+    private Vector3 hookLocation;
+    private Vector3 hookMovement;
+    private float startingHookTime;
 
     // Start is called before the first frame update
     void Start()
@@ -55,9 +64,8 @@ public class PlayerScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        var startTime = DateTime.Now;
-        
-        if (isDashing)
+
+        if (isDashing || isHooking)
         {
             return;
         }
@@ -74,17 +82,40 @@ public class PlayerScript : MonoBehaviour
             //StartCoroutine(Dash());
         }
         
-        var elapsed = (DateTime.Now - startTime).Milliseconds;
-        print("PlayerScript Update: " + elapsed);
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            StartHook();
+        }
     }
 
     // FixedUpdate is called by the Physics System
     private void FixedUpdate()
     {
-        var startTime = DateTime.Now;
-        
-        // Will run dash coroutine
-        if (isDashing)
+
+        if (isHooking)
+        {
+            if (Time.time < startingHookTime + hookTime)
+            {
+                // Turn towards the intended destination
+                Quaternion intendedLookDir = Quaternion.LookRotation(hookMovement);
+                playerRigidbody.rotation = Quaternion.RotateTowards(
+                    playerRigidbody.rotation,
+                    intendedLookDir,
+                    RotationSpeed * Time.deltaTime);
+            
+                // if (!TryMove(hookMovement.normalized, hookSpeed * Time.deltaTime))
+                // {
+                //     // Hit an obstacle so end dash
+                //     EndHook();
+                // }
+            }
+            else
+            {
+                // Dash time over so end dash
+                EndHook();
+            }
+        }
+        else if (isDashing)
         {
             if (Time.time < startingDashTime + dashTime)
             {
@@ -107,8 +138,7 @@ public class PlayerScript : MonoBehaviour
                 EndDash();
             }
         }
-
-        if (isWalking)
+        else if (isWalking)
         {
             // Compute how the player would move to get there in one step
             Vector3 movement = targetDestination - playerRigidbody.position;
@@ -137,8 +167,7 @@ public class PlayerScript : MonoBehaviour
             }
         }
         
-        var elapsed = (DateTime.Now - startTime).Milliseconds;
-        print("PlayerScript LateUpdate: " + elapsed);
+ 
     }
 
     // Handle what happens when Mouse 1 is clicked
@@ -201,5 +230,31 @@ public class PlayerScript : MonoBehaviour
             dashLocation = new Vector3(hit.point.x, playerRigidbodyPosition.y, hit.point.z);
             dashMovement = dashLocation - playerRigidbodyPosition;
         }
+    }
+    
+    private void StartHook()
+    {
+        // Make hook child object visible, and start moving it and checking for its collision
+        RaycastHit hit;
+        if (Physics.Raycast(mainCamera.ScreenPointToRay(Input.mousePosition),
+            out hit, Mathf.Infinity, mouseClickLayerMask))
+        {
+            startingHookTime = Time.time;
+            isHooking = true;
+            var playerRigidbodyPosition = playerRigidbody.position;
+            hookLocation = new Vector3(hit.point.x, playerRigidbodyPosition.y, hit.point.z);
+            hookMovement = hookLocation - playerRigidbodyPosition;
+
+            Transform bulletTransform = Instantiate(pfBulletPhysics, transform.position + Vector3.forward * 2, Quaternion.identity);
+            Vector3 shootDir = (hookMovement.normalized);
+            bulletTransform.GetComponent<BulletPhysics>().Setup(shootDir);
+        }
+    }
+    
+    private void EndHook()
+    {
+        isHooking = false;
+        isWalking = false;
+        isDashing = false;
     }
 }

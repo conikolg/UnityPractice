@@ -38,8 +38,7 @@ public class CameraScript : MonoBehaviour
 
     void LateUpdate()
     {
-        var startTime = DateTime.Now;
-        
+ 
         if (target)
         {
             Vector3 currentPosition = transform.position;
@@ -59,8 +58,6 @@ public class CameraScript : MonoBehaviour
             // Set new position of camera
             transform.position = new Vector3(newX, newY, newZ);
         }
-        
-        var elapsed = (DateTime.Now - startTime).Milliseconds;
-        print("CameraScript LateUpdate: " + elapsed);
+ 
     }
 }

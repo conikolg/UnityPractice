@@ -62,16 +62,14 @@ public class ProjectFog : MonoBehaviour
 
         while (blendAmount < 1)
         {
-            var startTime = DateTime.Now;
+ 
             
             // increase the interpolation amount
             blendAmount += Time.deltaTime * blendSpeed;
             // Set the blend property so the shader knows how much to lerp
             // by when checking the alpha value
             projector.material.SetFloat("_Blend", blendAmount);
-            
-            var elapsed = (DateTime.Now - startTime).Milliseconds;
-            print("ProjectFog BlendFog1Cycle: " + elapsed);
+ 
             
             yield return null;
         }

@@ -73,7 +73,7 @@ public class ShowInNoFogOnly : MonoBehaviour
 
     void LateUpdate()
     {
-        var startTime = DateTime.Now;
+  
         
         
         // If no renderer is available, this whole game object disables?
@@ -89,7 +89,6 @@ public class ShowInNoFogOnly : MonoBehaviour
         foreach(MeshRenderer renderer in childRenderers)
             renderer.enabled = GetColorAtPosition().grayscale >= threshold;
         
-        var elapsed = (DateTime.Now - startTime).Milliseconds;
-        print("ShowInNoFogOnly LateUpdate: " + elapsed);
+ 
     }
 }

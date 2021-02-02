@@ -12,7 +12,7 @@ public class TeleportController : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
-        var startTime = DateTime.Now;
+ 
         
         elpasedTime += Time.deltaTime;
 
@@ -21,8 +21,7 @@ public class TeleportController : MonoBehaviour
             elpasedTime = 0;
         }
                 
-        var elapsed = (DateTime.Now - startTime).Milliseconds;
-        print("TeleportController Update: " + elapsed);
+ 
     }
 
     private void OnTriggerEnter(Collider other)

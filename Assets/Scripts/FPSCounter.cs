@@ -20,7 +20,7 @@ public class FPSCounter : MonoBehaviour
 
     public void Update()
     {
-        var startTime = DateTime.Now;
+ 
         
         // Only update if next update time has been reached
         if (Time.unscaledTime > _timer)
@@ -34,7 +34,6 @@ public class FPSCounter : MonoBehaviour
             _timer = Time.unscaledTime + 1f / RefreshRate;
         }
         
-        var elapsed = (DateTime.Now - startTime).Milliseconds;
-        print("FPSCounter Update: " + elapsed);
+ 
     }
 }
