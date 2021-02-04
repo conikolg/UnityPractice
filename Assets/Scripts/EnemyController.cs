@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -20,6 +21,14 @@ public class EnemyController : MonoBehaviour
         enemyRigidbody.AddForce(-shootDir * moveSpeed, ForceMode.Impulse);
 
         transform.eulerAngles = new Vector3(0, 0, GetAngleFromVectorFloat(-shootDir));
+    }
+
+    private void Update()
+    {
+        if (isBeingHooked)
+        {
+            // affected by something
+        }
     }
 
 

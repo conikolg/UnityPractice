@@ -10,15 +10,34 @@ public class BulletPhysics : MonoBehaviour
     private Vector3 shootDir;
     private Rigidbody hookRigidbody;
 
-    public void Setup(Vector3 shootDir)
+    private PlayerScript.EndHook endHook;
+    private float timeToLive = 1f;
+
+    private float deletionTime;
+
+    public void Setup(Vector3 shootDir, PlayerScript.EndHook endHook)
     {
+        this.endHook = endHook;
         hookRigidbody = GetComponent<Rigidbody>();
         this.shootDir = shootDir;
 
         hookRigidbody.AddForce(this.shootDir * moveSpeed, ForceMode.Impulse);
 
         transform.eulerAngles = new Vector3(0, 0, GetAngleFromVectorFloat(shootDir));
-        Destroy(gameObject, 5f);
+        deletionTime = Time.time + timeToLive;
+
+        StartCoroutine(DeleteBullet());
+    }
+
+    private IEnumerator DeleteBullet()
+    {
+        while (Time.time < deletionTime)
+        {
+            yield return null;
+        }
+
+        endHook();
+        Destroy(gameObject);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -32,6 +51,7 @@ public class BulletPhysics : MonoBehaviour
 
             transform.eulerAngles = new Vector3(0, 0, GetAngleFromVectorFloat(-shootDir));
             enemy.HookEnemy(shootDir, moveSpeed);
+            endHook();
             Destroy(gameObject);
         }
     }

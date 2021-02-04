@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - Big Wall
+  - Hook
+  - Enemy
   layers:
   - Default
   - TransparentFX
